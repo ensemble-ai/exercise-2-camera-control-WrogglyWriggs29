@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://88du8yjefx8j"]
+[gd_scene load_steps=13 format=4 uid="uid://88du8yjefx8j"]
 
 [ext_resource type="PackedScene" uid="uid://dtm13sp1jsrwi" path="res://scenes/vessel.tscn" id="1_oaql3"]
 [ext_resource type="Script" path="res://scripts/camera_selector.gd" id="2_qffo5"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://kafb18nsdh54" path="res://scenes/terrain_manager.tscn" id="4_josyl"]
 [ext_resource type="AudioStream" uid="uid://6tbtl0jk0dlo" path="res://assets/audio/VGMA Challenge - July 16th.wav" id="5_o8tm3"]
 [ext_resource type="Script" path="res://scripts/camera_controllers/auto_scroll.gd" id="6_vs2tn"]
+[ext_resource type="Script" path="res://scripts/camera_controllers/position_lock_lerp_smoothing.gd" id="7_igj2h"]
 [ext_resource type="Script" path="res://scripts/camera_controllers/position_lock.gd" id="7_lbnff"]
 
 [sub_resource type="ArrayMesh" id="ArrayMesh_63b4i"]
@@ -43,7 +44,7 @@ terrain_manager = NodePath("../TerrainManager")
 
 [node name="CameraSelector" type="Node" parent="." node_paths=PackedStringArray("cameras")]
 script = ExtResource("2_qffo5")
-cameras = [NodePath("../PushBoxCamera"), NodePath("../PushBoxCamera2"), NodePath("../PushBoxCamera3"), NodePath("../PositionLockCamera"), NodePath("../AutoScroll")]
+cameras = [NodePath("../PushBoxCamera"), NodePath("../PushBoxCamera2"), NodePath("../PushBoxCamera3"), NodePath("../PositionLockCamera"), NodePath("../AutoScroll"), NodePath("../PositionLockLerpSmoothing")]
 
 [node name="PushBoxCamera" parent="." node_paths=PackedStringArray("target") instance=ExtResource("3_ttnp6")]
 transform = Transform3D(1, 0, 0, 0, 1.19249e-08, 1, 0, -1, 1.19249e-08, 0, 30, 0)
@@ -88,6 +89,14 @@ script = ExtResource("6_vs2tn")
 top_left = Vector2(-5, -5)
 bottom_right = Vector2(5, 5)
 autoscroll_speed = Vector3(10, 0, 10)
+target = NodePath("../Vessel")
+
+[node name="PositionLockLerpSmoothing" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+script = ExtResource("7_igj2h")
+follow_speed = 0.6
+catchup_speed = 30.0
+leash_distance = 7.0
 target = NodePath("../Vessel")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
