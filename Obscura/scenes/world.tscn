@@ -88,17 +88,17 @@ target = NodePath("../Vessel")
 [node name="AutoScroll" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
 script = ExtResource("6_vs2tn")
-top_left = Vector2(-5, -5)
-bottom_right = Vector2(5, 5)
+top_left = Vector2(-8, -5)
+bottom_right = Vector2(8, 5)
 autoscroll_speed = Vector3(10, 0, 10)
 target = NodePath("../Vessel")
 
 [node name="PositionLockLerpSmoothing" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
 script = ExtResource("7_igj2h")
-follow_speed = 0.6
+follow_speed = 0.8
 catchup_speed = 30.0
-leash_distance = 7.0
+leash_distance = 3.0
 target = NodePath("../Vessel")
 
 [node name="PositionLeadLerpSmoothing" type="Camera3D" parent="." node_paths=PackedStringArray("target")]

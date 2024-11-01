@@ -5,6 +5,8 @@ extends CameraControllerBase
 @export var bottom_right: Vector2
 @export var autoscroll_speed: Vector3
 
+enum DIRECTION {UP, DOWN, LEFT, RIGHT}
+
 func _ready() -> void:
 	super()
 	position = target.position
@@ -16,23 +18,37 @@ func _process(delta: float) -> void:
 	if draw_camera_logic:
 		draw_logic()
 	
+	# apply autoscroll
 	global_position += autoscroll_speed * delta
 
-	var tl_pos := Vector2(top_left.x + global_position.x, top_left.y + global_position.z)
-	var br_pos := Vector2(bottom_right.x + global_position.x, bottom_right.y + global_position.z)
+	var tpos := target.global_position
+	var r := target.RADIUS
 
-	var tpos := Vector2(target.global_position.x, target.global_position.z)
-	var trad := target.RADIUS
-	if tpos.x - trad < tl_pos.x:
-		target.global_position.x = tl_pos.x + trad
-	if tpos.x + trad > br_pos.x:
-		target.global_position.x = br_pos.x - trad
-	if tpos.y - trad < tl_pos.y:
-		target.global_position.z = tl_pos.y + trad
-	if tpos.y + trad > br_pos.y:
-		target.global_position.z = br_pos.y - trad
+	var limits := get_limits(global_position, r)
+
+	# snap the target in each direction
+	if tpos.z < limits[DIRECTION.UP]:
+		target.global_position.z = limits[DIRECTION.UP]
+	elif tpos.z > limits[DIRECTION.DOWN]:
+		target.global_position.z = limits[DIRECTION.DOWN]
+
+	if tpos.x < limits[DIRECTION.LEFT]:
+		target.global_position.x = limits[DIRECTION.LEFT]
+	elif tpos.x > limits[DIRECTION.RIGHT]:
+		target.global_position.x = limits[DIRECTION.RIGHT]
 
 	super(delta)
+
+# each limit is the position of the target when it touches the edge of the bounding box
+func get_limits(cpos: Vector3, r: float) -> Array[float]:
+	var limits: Array[float] = [0, 0, 0, 0]
+
+	limits[DIRECTION.UP] = cpos.z + top_left.y + r
+	limits[DIRECTION.DOWN] = cpos.z + bottom_right.y - r
+	limits[DIRECTION.LEFT] = cpos.x + top_left.x + r
+	limits[DIRECTION.RIGHT] = cpos.x + bottom_right.x - r
+
+	return limits
 
 func draw_logic() -> void:
 	var mesh_instance := MeshInstance3D.new()
@@ -44,22 +60,8 @@ func draw_logic() -> void:
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 
-	var top_left_vert := Vector3(top_left.x, 0, top_left.y)
-	var top_right_vert := Vector3(bottom_right.x, 0, top_left.y)
-	var bottom_left_vert := Vector3(top_left.x, 0, bottom_right.y)
-	var bottom_right_vert := Vector3(bottom_right.x, 0, bottom_right.y)
-
-	immediate_mesh.surface_add_vertex(top_left_vert)
-	immediate_mesh.surface_add_vertex(top_right_vert)
-
-	immediate_mesh.surface_add_vertex(top_right_vert)
-	immediate_mesh.surface_add_vertex(bottom_right_vert)
-
-	immediate_mesh.surface_add_vertex(bottom_right_vert)
-	immediate_mesh.surface_add_vertex(bottom_left_vert)
-
-	immediate_mesh.surface_add_vertex(bottom_left_vert)
-	immediate_mesh.surface_add_vertex(top_left_vert)
+	# draw limits
+	add_box(immediate_mesh, top_left, bottom_right)
 	
 	immediate_mesh.surface_end()
 
@@ -73,3 +75,21 @@ func draw_logic() -> void:
 	#mesh is freed after one update of _process
 	await get_tree().process_frame
 	mesh_instance.queue_free()
+
+func add_box(mesh, tl: Vector2, br: Vector2) -> void:
+	var top_left_vert := Vector3(tl.x, 0, tl.y)
+	var top_right_vert := Vector3(br.x, 0, tl.y)
+	var bottom_left_vert := Vector3(tl.x, 0, br.y)
+	var bottom_right_vert := Vector3(br.x, 0, br.y)
+	
+	mesh.surface_add_vertex(top_left_vert)
+	mesh.surface_add_vertex(top_right_vert)
+	
+	mesh.surface_add_vertex(top_right_vert)
+	mesh.surface_add_vertex(bottom_right_vert)
+	
+	mesh.surface_add_vertex(bottom_right_vert)
+	mesh.surface_add_vertex(bottom_left_vert)
+	
+	mesh.surface_add_vertex(bottom_left_vert)
+	mesh.surface_add_vertex(top_left_vert)

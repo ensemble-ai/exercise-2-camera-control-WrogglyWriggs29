@@ -17,33 +17,46 @@ func _process(delta: float) -> void:
 	if draw_camera_logic:
 		draw_logic()
 	
-	var tpos2 := Vector2(target.global_position.x, target.global_position.z)
-	var cpos2 := Vector2(global_position.x, global_position.z)
-	var distance = tpos2 - cpos2
-	var length = distance.length()
-	var direction = distance.normalized()
+	var tpos := target.global_position
+	var input := target.input_dir
 
-	if length > leash_distance:
-		var new_pos: Vector2 = tpos2 - direction * max((leash_distance - 0.4), 0)
-		position.x = new_pos.x
-		position.z = new_pos.y
-	elif target.velocity == Vector3.ZERO:
-		var cvel: Vector2 = direction * catchup_speed * delta
-		if cvel.length() > length:
-			cvel = distance
-		position.x += cvel.x
-		position.z += cvel.y
+	# without input, catch up to the target
+	if input == Vector2.ZERO:
+		move_towards(tpos, catchup_speed, delta)
+	
+	# with input, follow the target
 	else:
 		var follow = follow_speed * target.velocity.length()
-		var cvel: Vector2 = direction * follow * delta
-		if cvel.length() > length:
-			cvel = distance
-		position.x += cvel.x
-		position.z += cvel.y
+		move_towards(tpos, follow, delta)
 
+	if xz_to(tpos).length() > leash_distance:
+		apply_leash(tpos)
 
 	super(delta)
 
+func apply_leash(tpos: Vector3) -> void:
+	var direction := xz_to(tpos).normalized()
+	var new_pos: Vector3 = tpos - direction * leash_distance
+
+	global_position.x = new_pos.x
+	global_position.z = new_pos.z
+
+# move the camera towards a target without overshooting
+func move_towards(tpos: Vector3, speed: float, delta: float) -> void:
+	var to := xz_to(tpos)
+	var offset := speed * to.normalized() * delta
+	
+	if offset.length() > to.length():
+		global_position = tpos
+	else:
+		global_position += offset
+
+# get the vector from the camera to a target on the xz plane
+func xz_to(v: Vector3) -> Vector3:
+	var to := v - global_position
+	to.y = 0
+	return to
+	
 func draw_logic() -> void:
 	const LENGTH: float = 5.0
 
@@ -56,6 +69,7 @@ func draw_logic() -> void:
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 
+	# draw cross
 	immediate_mesh.surface_add_vertex(Vector3(-LENGTH, 0, 0))
 	immediate_mesh.surface_add_vertex(Vector3(LENGTH, 0, 0))
 	
