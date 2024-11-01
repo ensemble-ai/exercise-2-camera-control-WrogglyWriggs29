@@ -12,7 +12,6 @@ func _ready() -> void:
 	super()
 	position = target.position
 	
-
 func _process(delta: float) -> void:
 	if !current:
 		return
@@ -20,36 +19,60 @@ func _process(delta: float) -> void:
 	if draw_camera_logic:
 		draw_logic()
 
-	super(delta)
+	var input := target.input_dir
+	var tpos := target.global_position
 
-func _physics_process(delta: float) -> void:
-	if target.velocity != Vector3.ZERO:
+	# update clock
+	if input != Vector2.ZERO:
 		stop_time_elapsed = 0.0
 	else:
 		stop_time_elapsed += delta
 
-	var tpos := target.global_position
-	var cpos := global_position
-	var diff := tpos - cpos
-	var diff2d := Vector2(diff.x, diff.z)
-	var dir_to_target := diff.normalized()
+	# catch up if no movement input has been provided for enough time
+	if stop_time_elapsed > catchup_delay_duration:
+		catchup_to(tpos, delta)
+	# otherwise speed up in the direction of the input
+	elif input != Vector2.ZERO:
+		speedup_in_direction(xz_to_3d(input).normalized(), delta)
 
+	# apply leash
+	if xz_to(tpos).length() > leash_distance:
+		apply_leash(tpos)
+	
+	super(delta)
+
+func catchup_to(tpos: Vector3, delta: float) -> void:
+	var to_target := xz_to(tpos)
+	var offset := catchup_speed * to_target.normalized() * delta
+
+	# don't overshoot the target
+	if offset.length() > to_target.length():
+		global_position = tpos
+	else:
+		global_position += offset
+
+func speedup_in_direction(dir: Vector3, delta: float) -> void:
+	# account for hyperdrive
 	var camera_speed = lead_speed * target.speed / 50
+	global_position += camera_speed * dir * delta
 
-	var input_dir = target.input_dir
-	if diff2d.length() > leash_distance:
-		var tpos_pred := tpos + target.velocity * delta
-		var direction := Vector3(dir_to_target.x, 0, dir_to_target.z).normalized()
-		var new_pos: Vector3 = tpos_pred - direction * max(leash_distance - 0.01, 0)
+func apply_leash(tpos: Vector3) -> void:
+	var direction := xz_to(tpos).normalized()
+	var new_pos: Vector3 = tpos - direction * leash_distance
 
-		global_position.x = new_pos.x
-		global_position.z = new_pos.z
+	global_position.x = new_pos.x
+	global_position.z = new_pos.z
 
-	elif input_dir != Vector2.ZERO:
-		global_position += camera_speed * Vector3(input_dir.x, 0, input_dir.y) * delta
+# get the vector from the camera to v projected to the xz plane
+func xz_to(v: Vector3) -> Vector3:
+	var to := v - global_position
+	to.y = 0
+	return to
 
-	elif stop_time_elapsed > catchup_delay_duration:
-		global_position += catchup_speed * Vector3(dir_to_target.x, 0, dir_to_target.z) * delta
+# convert an 2d vector like (x, z) to 3d
+func xz_to_3d(v: Vector2) -> Vector3:
+	return Vector3(v.x, 0, v.y)
+
 
 func draw_logic() -> void:
 	const LENGTH: float = 5.0
@@ -63,6 +86,7 @@ func draw_logic() -> void:
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 
+	# draw cross
 	immediate_mesh.surface_add_vertex(Vector3(-LENGTH, 0, 0))
 	immediate_mesh.surface_add_vertex(Vector3(LENGTH, 0, 0))
 	
