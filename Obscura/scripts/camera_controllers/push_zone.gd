@@ -9,13 +9,10 @@ enum DIRECTION {UP, DOWN, LEFT, RIGHT}
 @export var speedup_zone_top_left: Vector2
 @export var speedup_zone_bottom_right: Vector2
 
-var sped_up_in = [false, false, false, false]
-
 func _ready() -> void:
 	super()
 	position = target.position
 	
-
 func _process(delta: float) -> void:
 	if !current:
 		return
@@ -23,82 +20,118 @@ func _process(delta: float) -> void:
 	if draw_camera_logic:
 		draw_logic()
 	
-	const WALL_DIST = 0.5
-	var r = target.RADIUS
-	var tpos := target.global_position
-	var cpos := global_position
-	var left_lim = cpos.x + pushbox_top_left.x
-	var right_lim = cpos.x + pushbox_bottom_right.x
-	var top_lim = cpos.z + pushbox_top_left.y
-	var bottom_lim = cpos.z + pushbox_bottom_right.y
+	# detect the directions in which the target is pushing
+	var push_dirs: Array[bool] = detect_pushing(global_position, target.global_position, target.RADIUS)
+	apply_push(push_dirs, delta)
 
-	var left_speed = cpos.x + speedup_zone_top_left.x + r
-	var right_speed = cpos.x + speedup_zone_bottom_right.x - r
-	var top_speed = cpos.z + speedup_zone_top_left.y + r
-	var bottom_speed = cpos.z + speedup_zone_bottom_right.y - r
-
-	sped_up_in = [false, false, false, false]
-
-	if tpos.x > right_speed:
-		if tpos.x >= right_lim - WALL_DIST:
-			speedup_in(DIRECTION.UP, delta)
-			speedup_in(DIRECTION.DOWN, delta)
-		if tpos.x > right_lim:
-			var offset = tpos.x - (cpos.x + pushbox_bottom_right.x)
-			global_position.x += r + offset
-		else:
-			speedup_in(DIRECTION.RIGHT, delta)
-	elif tpos.x < left_speed:
-		if tpos.x <= left_lim + WALL_DIST:
-			speedup_in(DIRECTION.UP, delta)
-			speedup_in(DIRECTION.DOWN, delta)
-		if tpos.x < left_lim:
-			var offset = (cpos.x + pushbox_top_left.x) - tpos.x
-			global_position.x -= r + offset
-		else:
-			speedup_in(DIRECTION.LEFT, delta)
-
-	if tpos.z < top_speed:
-		if tpos.z <= top_lim + WALL_DIST:
-			speedup_in(DIRECTION.LEFT, delta)
-			speedup_in(DIRECTION.RIGHT, delta)
-		if tpos.z < top_lim:
-			var offset = (cpos.z + pushbox_top_left.y) - tpos.z
-			global_position.z -= r + offset
-		else:
-			speedup_in(DIRECTION.UP, delta)
-	elif tpos.z > bottom_speed:
-		if tpos.z >= bottom_lim - WALL_DIST:
-			speedup_in(DIRECTION.LEFT, delta)
-			speedup_in(DIRECTION.RIGHT, delta)
-		if tpos.z > bottom_lim:
-			var offset = tpos.z - (cpos.z + pushbox_bottom_right.y)
-			global_position.z += r + offset
-		else:
-			speedup_in(DIRECTION.DOWN, delta)
-
+	# apply the pushbox (snap camera s.t. target is within it)
+	apply_box(target.global_position, global_position, target.RADIUS)
 
 	super(delta)
 
-func speedup_in(direction: DIRECTION, delta: float) -> void:
-	if sped_up_in[direction]:
-		return
-	var vel = Vector3.ZERO
-	match direction:
-		DIRECTION.UP:
-			vel = Vector3(0, 0, min(target.velocity.z, 0) * push_ratio)
-		DIRECTION.DOWN:
-			vel = Vector3(0, 0, max(target.velocity.z, 0) * push_ratio)
-		DIRECTION.LEFT:
-			vel = Vector3(min(target.velocity.x, 0) * push_ratio, 0, 0)
-		DIRECTION.RIGHT:
-			vel = Vector3(max(target.velocity.x, 0) * push_ratio, 0, 0)
-	if vel != Vector3.ZERO:
-		sped_up_in[direction] = true
-	global_position += vel * delta
+func apply_box(tpos: Vector3, cpos: Vector3, r: float) -> void:
+	# need to recalculate the limits in case the player pushed the camera
+	var limits := get_limits(cpos, r)
 
-func sum(v: Vector3) -> float:
-	return v.x + v.y + v.z
+	# snap the camera in each direction
+	if tpos.z < limits[DIRECTION.UP]:
+		global_position.z += tpos.z - limits[DIRECTION.UP]
+	elif tpos.z > limits[DIRECTION.DOWN]:
+		global_position.z += tpos.z - limits[DIRECTION.DOWN]
+
+	if tpos.x < limits[DIRECTION.LEFT]:
+		global_position.x += tpos.x - limits[DIRECTION.LEFT]
+	elif tpos.x > limits[DIRECTION.RIGHT]:
+		global_position.x += tpos.x - limits[DIRECTION.RIGHT]
+
+# each limit is the position of the target when it touches the edge of the pushbox
+func get_limits(cpos: Vector3, r: float) -> Array[float]:
+	var limits: Array[float] = [0, 0, 0, 0]
+
+	limits[DIRECTION.UP] = cpos.z + pushbox_top_left.y + r
+	limits[DIRECTION.DOWN] = cpos.z + pushbox_bottom_right.y - r
+	limits[DIRECTION.LEFT] = cpos.x + pushbox_top_left.x + r
+	limits[DIRECTION.RIGHT] = cpos.x + pushbox_bottom_right.x - r
+
+	return limits
+
+func get_speedzone_limits(cpos: Vector3, r: float) -> Array[float]:
+	var limits: Array[float] = [0, 0, 0, 0]
+
+	limits[DIRECTION.UP] = cpos.z + speedup_zone_top_left.y + r
+	limits[DIRECTION.DOWN] = cpos.z + speedup_zone_bottom_right.y - r
+	limits[DIRECTION.LEFT] = cpos.x + speedup_zone_top_left.x + r
+	limits[DIRECTION.RIGHT] = cpos.x + speedup_zone_bottom_right.x - r
+
+	return limits
+
+
+func detect_pushing(cpos: Vector3, tpos: Vector3, r: float) -> Array[bool]:
+	var limits := get_limits(cpos, r)
+	var speedzone_limits := get_speedzone_limits(cpos, r)
+
+	var push_in: Array[bool] = [false, false, false, false]
+
+	# orthogonal pushing when against a wall
+	if tpos.x >= limits[DIRECTION.RIGHT] || tpos.x <= limits[DIRECTION.LEFT]:
+		push_in = detect_push_in(DIRECTION.UP, push_in)
+		push_in = detect_push_in(DIRECTION.DOWN, push_in)
+
+	if tpos.z <= limits[DIRECTION.UP] || tpos.z >= limits[DIRECTION.DOWN]:
+		push_in = detect_push_in(DIRECTION.LEFT, push_in)
+		push_in = detect_push_in(DIRECTION.RIGHT, push_in)
+
+	# pushing in speedup zones
+	if tpos.x > speedzone_limits[DIRECTION.RIGHT]:
+		push_in = detect_push_in(DIRECTION.RIGHT, push_in)
+	elif tpos.x < speedzone_limits[DIRECTION.LEFT]: # elif to avoid double pushing when speedup zones overlap
+		push_in = detect_push_in(DIRECTION.LEFT, push_in)
+
+	if tpos.z < speedzone_limits[DIRECTION.UP]:
+		push_in = detect_push_in(DIRECTION.UP, push_in)
+	elif tpos.z > speedzone_limits[DIRECTION.DOWN]:
+		push_in = detect_push_in(DIRECTION.DOWN, push_in)
+	
+	return push_in
+
+
+# detect if the target's velocity indicates that it's pushing in a certain direction
+func detect_push_in(dir: DIRECTION, sped_up_in: Array[bool]) -> Array:
+	if sped_up_in[dir]:
+		return sped_up_in
+
+	var tvel := Vector2(target.velocity.x, target.velocity.z)
+	match dir:
+		DIRECTION.UP:
+			if tvel.y < 0:
+				sped_up_in[dir] = true
+		DIRECTION.DOWN:
+			if tvel.y > 0:
+				sped_up_in[dir] = true
+		DIRECTION.RIGHT:
+			if tvel.x > 0:
+				sped_up_in[dir] = true
+		DIRECTION.LEFT:
+			if tvel.x < 0:
+				sped_up_in[dir] = true
+
+	return sped_up_in
+
+# move the camera in the directions the target is pushing
+func apply_push(dirs: Array[bool], delta: float) -> void:
+	var tvel := target.velocity
+
+	if dirs[DIRECTION.UP] && tvel.z < 0:
+		global_position.z += tvel.z * push_ratio * delta
+
+	if dirs[DIRECTION.DOWN] && tvel.z > 0:
+		global_position.z += tvel.z * push_ratio * delta
+
+	if dirs[DIRECTION.LEFT] && tvel.x < 0:
+		global_position.x += tvel.x * push_ratio * delta
+
+	if dirs[DIRECTION.RIGHT] && tvel.x > 0:
+		global_position.x += tvel.x * push_ratio * delta
 
 func draw_logic() -> void:
 	var mesh_instance := MeshInstance3D.new()
@@ -109,8 +142,12 @@ func draw_logic() -> void:
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
+
+	# draw pushbox
 	add_box(immediate_mesh, pushbox_top_left, pushbox_bottom_right)
+	# draw speedup zone
 	add_box(immediate_mesh, speedup_zone_top_left, speedup_zone_bottom_right)
+
 	immediate_mesh.surface_end()
 
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
