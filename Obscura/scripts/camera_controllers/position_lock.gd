@@ -30,6 +30,7 @@ func draw_logic() -> void:
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 
+	# draw cross
 	immediate_mesh.surface_add_vertex(Vector3(-LENGTH, 0, 0))
 	immediate_mesh.surface_add_vertex(Vector3(LENGTH, 0, 0))
 	

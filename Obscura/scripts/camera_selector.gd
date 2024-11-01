@@ -23,10 +23,10 @@ func _process(_delta):
 			if null != cameras[index]:
 				if index == current_controller:
 					cameras[current_controller].make_current()
+					# init the camera with the target's position
 					cameras[current_controller].position = cameras[current_controller].target.position
 				else:
 					cameras[index].current = false
-					#cameras[index].draw_camera_logic = false
 		#make sure we have an active controller
 		if cameras[current_controller] == null:
 			for index in len(cameras):
