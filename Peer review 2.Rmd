@@ -1,0 +1,132 @@
+---
+title: "Peer review 2"
+author: "Zhuolei He"
+date: "2024-11-12"
+output: pdf_document
+---
+
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Peer-Review for Programming Exercise 2 #
+
+# Solution Assessment #
+
+## Peer-reviewer Information
+
+* *name:* Zhuolei He 
+* *email:* leihe@ucdavis.edu
+
+## Solution Assessment ##
+
+### Stage 1 ###
+
+- [x] Perfect
+- [ ] Great
+- [ ] Good
+- [ ] Satisfactory
+- [ ] Unsatisfactory
+
+___
+#### Justification ##### 
+The camera is held correctly in the centre, and the crosshairs are drawn with flawless logic. It is simple and effective to achieve
+
+___
+### Stage 2 ###
+
+- [x] Perfect
+- [ ] Great
+- [ ] Good
+- [ ] Satisfactory
+- [ ] Unsatisfactory
+
+___
+#### Justification ##### 
+The auto-scrolling functionality is well-implemented, however, minor optimization could be achieved in handling boundary cases for smooth transitions.
+
+___
+### Stage 3 ###
+
+- [x] Perfect
+- [ ] Great
+- [ ] Good
+- [ ] Satisfactory
+- [ ] Unsatisfactory
+
+___
+#### Justification ##### 
+The code handles movement input well, smoothly catching up to the player when they stop and maintaining a natural, fluid feel to the camera behavior.
+
+___
+### Stage 4 ###
+
+- [x] Perfect
+- [ ] Great
+- [ ] Good
+- [ ] Satisfactory
+- [ ] Unsatisfactory
+
+___
+#### Justification ##### 
+The use of lead speed and delay duration is implemented well, allowing smooth camera transitions and a natural feel when following the target. 
+
+___
+### Stage 5 ###
+
+- [x] Perfect
+- [ ] Great
+- [ ] Good
+- [ ] Satisfactory
+- [ ] Unsatisfactory
+
+___
+#### Justification ##### 
+the logic for handling the speedup push zone  is well implemented. The variables are defined clearly, and the code structure is efficient. The explanation in comments helps understand the mechanics, making this implementation robust and efficient.
+
+___
+# Code Style #
+
+
+### Description ###
+The use of meaningful variable names and well-structured functions makes the code easy to read and understand. Additionally, the logical grouping of related functions helps maintain clarity and keeps the codebase organized. 
+
+#### Style Guide Infractions ####
+
+I have not found any lines that do not comply with the Style Guide, and I think this student has done a very good job.
+
+#### Style Guide Exemplars ####
+
+[Neat and Organized Code](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L103): The peer's code demonstrates excellent organization and alignment, with each line of code neatly written and consistently formatted. This not only improves readability but also makes it easier to navigate and debug.
+
+[Use of Comments](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lock_lerp_smoothing.gd#L44): The current code does have some comments, but it would be beneficial to add more descriptive comments for complex logic and parameter definitions. 
+
+[Consistent Indentation](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L56): This student's code always maintains the same indentation when calculating questions. This attention to detail helps maintain a clean codebase and prevents common syntax errors.
+
+The peer demonstrates excellent adherence to naming conventions and organizes the code neatly, making it easy to understand.
+___
+
+# Best Practices #
+
+### Description ###
+
+The student’s code generally follows best practices, with clear structure and meaningful variable names. Concise methods and consistent use of functions show a solid understanding of methods. More detailed comments could further enhance code clarity.
+
+#### Best Practices Infractions ####
+
+[This variable is easily get confused](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_selector.gd#L9): The two variable names can be modified slightly, as camera and cameras are a bit hard to distinguish.
+
+[More clear varible name](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L78): The draw_logic() function uses constants like ‘LENGTH = 5.0’. Using named constants helps readability, but you could clarify what the length represents
+
+[Redundant Conditional Checks](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L16):  The 'if !current check' and subsequent logic could be streamlined or reconsidered for efficiency.
+
+Minor issues like clear variable nameas and lack of detailed comments can be improved to boost overall readability and maintainability.
+
+#### Best Practices Exemplars ####
+
+[Good Use of Exported Variables](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L4): Variables like lead_speed, catchup_delay_duration, and leash_distance on Lines 3-6 are exported properly for editor tweaking, demonstrating awareness of flexible game design.
+
+[Consistent Use of function](https://github.com/ensemble-ai/exercise-2-camera-control-WrogglyWriggs29/blob/385689bb16b0017cd6407573cabb2f051ebee095/Obscura/scripts/camera_controllers/position_lead_lerp_smoothing.gd#L15): The use of super() in the _ready() and _process() methods adheres to good inheritance practices, ensuring base class initialization.
+
+The code efficiently keeps methods concise, reflecting thoughtful design choices.
